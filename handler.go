@@ -12,7 +12,14 @@ import (
 // http.Handler will be called instead.
 func MapHandler(pathsToUrls map[string]string, fallback http.Handler) http.HandlerFunc {
 	//	TODO: Implement this...
-	return nil
+	return func(w http.ResponseWriter, r *http.Request) {
+		to, ok := pathsToUrls[r.URL.String()]
+		if !ok {
+			fallback.ServeHTTP(w, r)
+		} else {
+			http.Redirect(w, r, to, http.StatusFound)
+		}
+	}
 }
 
 // YAMLHandler will parse the provided YAML and then return
