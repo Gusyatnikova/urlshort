@@ -32,7 +32,7 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 
 func parseYAML(yamlBytes []byte) ([]redirectItem, error) {
 	var yamlList []redirectItem
-	err := yaml.Unmarshal(yamlBytes[1:len(yamlBytes) - 1], &yamlList)
+	err := yaml.Unmarshal(yamlBytes, &yamlList)
 	if err != nil {
 		return nil, err
 	}
