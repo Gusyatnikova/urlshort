@@ -1,14 +1,17 @@
 package urlshort
 
 import (
+	"encoding/json"
 	"gopkg.in/yaml.v2"
 	"net/http"
 )
 
-type redirectItem struct {
+type redirectItemYAML struct {
 	Path string `yaml:"path"`
 	URL string `yaml:"url"`
 }
+
+type redirectItemJSON map[string]string
 
 func MapHandler(inToRedirected map[string]string, fallback http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -21,6 +24,14 @@ func MapHandler(inToRedirected map[string]string, fallback http.Handler) http.Ha
 	}
 }
 
+func JSONHandler(json []byte, fallback http.Handler) (http.HandlerFunc, error) {
+	parsedJson, err := parseJSON(json)
+	if err != nil {
+		return fallback.ServeHTTP, err
+	}
+	return MapHandler(parsedJson, fallback), nil
+}
+
 func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	parsedYaml, err := parseYAML(yaml)
 	if err != nil {
@@ -30,8 +41,8 @@ func YAMLHandler(yaml []byte, fallback http.Handler) (http.HandlerFunc, error) {
 	return MapHandler(pathMap, fallback), nil
 }
 
-func parseYAML(yamlBytes []byte) ([]redirectItem, error) {
-	var yamlList []redirectItem
+func parseYAML(yamlBytes []byte) ([]redirectItemYAML, error) {
+	var yamlList []redirectItemYAML
 	err := yaml.Unmarshal(yamlBytes, &yamlList)
 	if err != nil {
 		return nil, err
@@ -39,9 +50,18 @@ func parseYAML(yamlBytes []byte) ([]redirectItem, error) {
 	return yamlList, nil
 }
 
-func buildMap(yamlList []redirectItem) map[string]string {
+func parseJSON(jsonBytes []byte) (redirectItemJSON, error) {
+	var jsonList redirectItemJSON
+	err := json.Unmarshal(jsonBytes, &jsonList)
+	if err != nil {
+		return nil, err
+	}
+	return jsonList, nil
+}
+
+func buildMap(yamlList []redirectItemYAML) map[string]string {
 	var yamlMap = map[string]string{}
-	var entry redirectItem
+	var entry redirectItemYAML
 		for _, entry = range yamlList {
 			yamlMap[entry.Path] = entry.URL
 		}
