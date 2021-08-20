@@ -55,3 +55,4 @@ func selectHandler(isYaml bool, fileBytes []byte, mapHandler http.HandlerFunc) h
 	}
 	return handler
 }
+
