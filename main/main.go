@@ -1,11 +1,11 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/Gusyatnikova/urlshort"
-	_ "github.com/lib/pq" //_ want include without directly reference
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,22 +26,24 @@ func main() {
 	isYAML := flag.Bool("isYaml", false, "set isYaml=True when you want to use .YAML instead of .JSON")
 	flag.Parse()
 	//SQL START HERE
-	var redir Redirector
-	InitRedirector(redir)
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
-
-	dbPtr, err := sql.Open("postgres", psqlInfo)
+	db, err := gorm.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer dbPtr.Close()
-	err = dbPtr.Ping()
-	if err != nil {
-		log.Println("Cannot connect to Database")
-		panic(err)
+	defer db.Close()
+	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
+		return "urlshort."+ defaultTableName
 	}
+	db.LogMode(true)
+	redirections := make([]Redirection,0)
+	db.Find(&redirections)
+	if db.Error != nil {
+		panic(db.Error)
+	}
+	gotToRedirect := ListToMapRedir(redirections)
 
 	http.HandleFunc("/", home)
 	var handler http.HandlerFunc

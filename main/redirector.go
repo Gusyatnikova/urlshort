@@ -1,5 +1,5 @@
 package main
-
+/*
 import (
 	"database/sql"
 	"log"
@@ -46,4 +46,4 @@ func (red *dbRedirector) GetRedirections() (map[string]string, error) {
 
 func (red *dbRedirector) CreateRedirection(path, url string) error {
 	return nil
-}
+}*/
